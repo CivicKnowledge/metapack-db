@@ -67,47 +67,7 @@ class Database(object):
         self.metadata = MetaData(bind=self.engine)
         self.session = create_session(bind=self.engine, autocommit=False, autoflush=True)
 
-    def list_tables(self):
-        from sqlalchemy.engine import reflection
 
-        inspector = reflection.Inspector.from_engine(self.engine)
-
-        for table_name in inspector.get_table_names():
-            yield table_name
-
-    def has_table(self, table_name):
-        return table_name in list(self.list_tables())
-        return self.engine.dialect.has_table(self.engine, table_name)
-
-    def delete_table(self, table_name):
-
-        t = Table(table_name,self.metadata)
-        t.drop(self.engine)
-
-        self.metadata = MetaData(bind=self.engine)
-
-    def make_table(self, table_name, columns):
-
-        type_map = {
-            'text': String,
-            'number': Float,
-            'integer': Integer
-        }
-
-        sacolumns = []
-
-        for c in columns:
-            sacol = Column(c['name'], type_map.get(c['datatype'], String)())
-
-            sacolumns.append(sacol)
-
-        table = Table(table_name, self.metadata, Column('_id', Integer, primary_key=True), *sacolumns)
-
-        table.create()
-
-    def get_table(self, table_name):
-
-        return Table(table_name, self.metadata, autoload=True, autoload_with=self.engine)
 
     def bulk_insert(self, table_name, rows):
 

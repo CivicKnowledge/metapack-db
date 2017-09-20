@@ -4,7 +4,7 @@
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
@@ -28,7 +28,7 @@ setup(
     version='0.0.1',
     description='CLI plugin for storing Metatab files in databases',
     long_description=readme,
-    packages=['metapack_db', 'test'],
+    packages=find_packages(),
     package_data={'metapack_db.sql': ['*.sql']},
     zip_safe=False,
     install_requires=[
