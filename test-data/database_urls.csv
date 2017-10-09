@@ -1,0 +1,14 @@
+url,dialect,driver
+postgresql://scott:tiger@localhost/mydatabase,postgresql,None
+postgresql+psycopg2://scott:tiger@localhost/mydatabase,postgresql,psycopg2
+postgresql+pg8000://scott:tiger@localhost/mydatabase,postgresql,pg8000
+mysql://scott:tiger@localhost/foo,mysql,None
+mysql+mysqldb://scott:tiger@localhost/foo,mysql,mysqldb
+mysql+mysqlconnector://scott:tiger@localhost/foo,mysql,mysqlconnector
+mysql+oursql://scott:tiger@localhost/foo,mysql,oursql
+mssql+pyodbc://scott:tiger@mydsn,mssql,pyodbc
+mssql+pymssql://scott:tiger@hostname:80/dbname,mssql,pymssql
+sqlite:///foo.db,sqlite,None
+sqlite:////absolute/path/to/foo.db,sqlite,None
+sqlite:///C:\\path\\to\\foo.db,sqlite,None
+oracle://scott:tiger@127.0.0.1:1521/sidname,oracle,None

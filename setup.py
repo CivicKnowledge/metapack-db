@@ -34,6 +34,7 @@ setup(
     install_requires=[
         'metapack',
         'sqlalchemy',
+        'pybase62'
     ],
 
     entry_points={
@@ -41,6 +42,11 @@ setup(
         ],
 
         'appurl.urls' : [
+            'postgresql+ = metapack_db.appurl:SqlalchemyDatabaseUrl',
+            'mysql+ = metapack_db.appurl:SqlalchemyDatabaseUrl',
+            'oracle+ = metapack_db.appurl:SqlalchemyDatabaseUrl',
+            'mssql+ = metapack_db.appurl:SqlalchemyDatabaseUrl',
+            'sqlite+ = metapack_db.appurl:SqlalchemyDatabaseUrl',
         ],
         'rowgenerators': [
         ],

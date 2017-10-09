@@ -1,21 +1,23 @@
-# Copyright (c) 2016 Civic Knowledge. This file is licensed under the terms of the
+# Copyright (c) 2017 Civic Knowledge. This file is licensed under the terms of the
 # Revised BSD License, included in this distribution as LICENSE
 
 """
 
 """
 
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, load_only
 from sqlalchemy import String, Integer, Float
 from sqlalchemy import Table, Column
 from sqlalchemy import create_engine, MetaData
+
+from metapack import parse_app_url, MetapackDoc
 
 from contextlib import contextmanager
 
 from .orm import Base
 from .document import Document
-from .resource import Resource
-from .term import Term
+from .resource import Resource # Need to import even if not referenced here.
+from .term import Term, Root, Section, ResourceTerm
 
 
 class Database(object):
@@ -40,47 +42,159 @@ class MetatabManager(object):
 
         self.database = database
 
+        # Should this be done here? Probably not ...
         self.database.create_tables()
 
+        self._session = None
+
+        self._nesting = 0
+
+        self._use_nesting = False
     @contextmanager
     def session(self):
         """Provide a transactional scope around a series of operations."""
-        session = self.database.Session()
+
+        if self._session:
+            if self._use_nesting:
+                self._session.begin_nested()
+            pass
+        else:
+            assert self._nesting == 0
+            self._session = self.database.Session()
+            self._session.info['manager'] = self
+
         try:
-            yield session
-            session.commit()
+            if self._use_nesting:
+                self._nesting += 1
+
+            yield self._session
+            if self._session:
+                self._session.commit()
         except:
-            session.rollback()
+            if self._session:
+                self._session.rollback()
             raise
         finally:
-            session.close()
+            if self._session:
+                self._session.close()
+
+            if self._use_nesting:
+                self._nesting -= 1
+
+            if self._nesting == 0:
+                self._session = None
 
     def init_tables(self):
         pass
 
     def add_doc(self, mt_doc):
+        import metapack.terms
+        import metatab
+        import metapack_db.resource
+
+        cls_map = {
+            metatab.Term: Term,
+            metatab.SectionTerm: Section,
+            metatab.RootSectionTerm: Root,
+            metapack.terms.Resource: ResourceTerm,
+            metapack.terms.Distribution: ResourceTerm,
+        }
+
+        def add_term(session, document, t):
+            term_class = cls_map[type(t)]
+
+            term = term_class(
+                document=document,
+                parent_term=t.parent_term_lc,
+                record_term=t.record_term_lc,
+                parent=t.parent._db_term if t.parent is not None else None,
+                value=t.value,
+                section=t.section._db_term if t.section is not None else None,
+                term_value_name=t.term_value_name,
+                properties=t.all_props
+            )
+
+            session.add(term)
+
+            t._db_term = term
+
+        def add_resource(session, document, t):
+
+            resource = metapack_db.resource.Resource(
+                document=document,
+                resource_term=t._db_term,
+                source_url=str(t.resolved_url),
+                table_name = Resource.make_table_name(document,t),
+                name=t.name,
+                schema = list(t.columns())
+            )
+
+            session.add(resource)
 
         with self.session() as s:
             document = Document()
             document.update_from_doc(mt_doc)
             s.add(document)
+            s.commit()
 
-            for t in mt_doc.all_terms:
-                term = Term(
-                    parent_term=t.parent_term_lc,
-                    record_term=t.record_term_lc,
-                    value=t.value,
-                    section=t.section.value if t.section is not None else None,
-                    term_value_name=t.term_value_name,
-                    properties=t.all_props
-                )
+            add_term(s,document, mt_doc.root)
+
+            for s_name, section in mt_doc.sections.items():
+
+                add_term(s,document, section)
+
+                for t in section:
+                    add_term(s,document, t)
+                    for d in t.descendents:
+                        add_term(s,document, d)
+
+                    if t.term_is('Root.Datafile'):
+                        add_resource(s,document,t)
+
+            s.commit()
+            s.expunge(document)
+            return document
+
+    def load(self, url, load_all_resources = False):
+        """Load a package and possibly one or all resources, from a url"""
+
+        u = parse_app_url(url)
+
+        d = MetapackDoc(u.clear_fragment())
+
+        db_doc = self.document(name=d.get_value('Root.Name'))
+
+        if not db_doc:
+            self.add_doc(d)
+            db_doc = self.document(name=d.get_value('Root.Name'))
+            assert db_doc
+
+        resources = []
+
+        if load_all_resources:
+
+            for r in self.resources(db_doc):
+                self.load_resource(r)
+                resources.append(r)
+
+        elif u.target_file:
+
+            r = self.resource(db_doc, u.target_file)
+
+            self.load_resource(r)
+
+            resources.append(d)
+
+        return (db_doc, resources)
 
 
-                print(term)
-                s.add(term)
+    def documents(self):
+        """Return a subset of fields from all of the documents that have been loaded into the database"""
+        with self.session() as s:
+            return s.query(Document)\
+                   .options(load_only("id","identifier","name","title","description"))
 
-
-    def delete_doc(self, id=None, identity=None, name=None):
+    def document(self, ref=None, id=None, identifier=None, name=None):
         """
         Delete a document record but id, identity or name
         :param id:
@@ -88,14 +202,71 @@ class MetatabManager(object):
         :param name:
         :return:
         """
-        with self.session() as s:
 
+        def f(s,ref=None, id=None, identifier=None, name=None ):
             if id is not None:
-                s.query(Document).filter_by(id=id).delete()
-            elif identity is not None:
-                s.query(Document).filter_by(identity=identity).delete()
+                d = s.query(Document).get(id)
+            elif identifier is not None:
+                d = s.query(Document).filter_by(identifier=identifier).first()
             elif name is not None:
-                s.query(Document).filter_by(name=name).delete()
+                d = s.query(Document).filter_by(name=name).first()
+            elif ref is not None:
+
+                # Metapack URL refs will get re-parsed to have the scheme_extension
+                ref = 'metapack+' + ref if not ref.startswith('metapack+') else ref
+
+                d = s.query(Document).filter((Document.ref == ref) | (Document.package_url == ref)).first()
+
+            else:
+                return None
+
+            return d
+
+        if self._session:
+            return f(self._session, ref, id, identifier, name)
+        else:
+            with self.session() as s:
+                d = f(self._session, ref, id, identifier, name)
+                if d:
+                    s.expunge(d) # So the doc can be used outside of the session
+
+                return d
+
+    def resources(self, doc):
+        """Return the resources for a database document"""
+
+        if self._session:
+            # If a session is active, use it, and don't detatch
+            return self._session.query(Resource).filter_by(document_id=doc.id).all()
+        else:
+            # Create a session and detach the object so they can be used outside the session
+            with self.session() as s:
+
+                resources = []
+
+                for r in s.query(Resource).filter_by(document_id=doc.id).all():
+                    s.expunge(r)
+                    resources.append(r)
+
+                return resources
+
+    def resource(self, doc, name):
+        """Return the resources for a document"""
+
+        def f(s):
+            return s.query(Resource).filter_by(document_id=doc.id).filter_by(name=name).one()
+
+        if self._session:
+            return f(self._session)
+        with self.session() as s:
+            r = f(s)
+            s.expunge(r)
+            return r
+
+
+    def create_resource_table(self, table):
+        """Create resource table on the database"""
+        table.create(self.database.engine)
 
     def list_tables(self):
         from sqlalchemy.engine import reflection
@@ -115,23 +286,15 @@ class MetatabManager(object):
 
         self.metadata = MetaData(bind=self.engine)
 
-    def make_table(self, table_name, columns):
 
-        type_map = {
-            'text': String,
-            'number': Float,
-            'integer': Integer
-        }
+    def load_resource(self, r):
 
-        sacolumns = []
+        with self.session() as s:
+            dbr = s.query(Resource).get(r.id)
+            dbr.make_table()
 
-        for c in columns:
-            sacol = Column(c['name'], type_map.get(c['datatype'], String)())
-            sacolumns.append(sacol)
+        with self.session() as s:
+            dbr = s.query(Resource).get(r.id)
+            dbr.load_resource()
 
-        table = Table(table_name, self.metadata, Column('_id', Integer, primary_key=True), *sacolumns)
 
-        table.create()
-
-    def get_table(self, table_name):
-        return Table(table_name, self.metadata, autoload=True, autoload_with=self.engine)
