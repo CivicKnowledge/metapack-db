@@ -7,11 +7,9 @@
 
 
 from metapack.exc import MetapackError, ResourceError
-from appurl.util import parse_url_to_dict, unparse_url_dict, file_ext
+from rowgenerators.appurl.util import parse_url_to_dict, unparse_url_dict, file_ext
 from os.path import basename, join, dirname
-from appurl import Url, parse_app_url, DownloadError
-from appurl.web import WebUrl
-from appurl.file import FileUrl
+from rowgenerators import Url, parse_app_url, DownloadError,  WebUrl, FileUrl
 
 from metatab import DEFAULT_METATAB_FILE
 

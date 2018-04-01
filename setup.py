@@ -59,7 +59,7 @@ setup(
     include_package_data=True,
     author='Eric Busboom',
     author_email='eric@civicknowledge.com',
-    url='https://github.com/CivicKnowledge/metapack-db.git',
+    url='https://github.com/Metatab/metapack-db.git',
     license='MIT',
     classifiers=classifiers,
     extras_require={
