@@ -5,13 +5,19 @@
 
 """
 
-from sqlalchemy import inspect, Column, Table, ForeignKey, String, Integer, Boolean
-from sqlalchemy.orm import relationship, mapper
+from sqlalchemy import (
+    Boolean,
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    inspect
+)
 from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.orm import mapper, relationship
 
-from .orm import Base
-from .orm import MutationList, JSONEncodedObj
-
+from .orm import Base, JSONEncodedObj, MutationList
 from .util import base_encode, tablenamify
 
 

@@ -6,12 +6,14 @@
 
 """
 
-from os import environ
-from appurl import parse_app_url
-from .appurl import SqlalchemyDatabaseUrl
-from metapack.cli.core import prt, warn, err
-from os import remove
+from os import environ, remove
 from os.path import exists
+
+from metapack.cli.core import err, prt, warn
+from rowgenerators import parse_app_url
+
+from .appurl import SqlalchemyDatabaseUrl
+
 
 class ArgumentrError(Exception): pass
 

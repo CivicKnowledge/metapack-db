@@ -8,18 +8,24 @@ Load a resource into an Sql database.
 
 
 import sys
-
-from appurl import parse_app_url
-from metapack import MetapackDoc, Downloader
-from metatab import DEFAULT_METATAB_FILE
-from metatab.util import slugify
 from os import getcwd
 from os.path import join
-from sqlalchemy import String, Integer, Float
-from sqlalchemy import Table, Column
-from sqlalchemy import create_engine, MetaData
+
+from appurl import parse_app_url
+from metapack import Downloader, MetapackDoc
+from metapack.cli.core import err, prt
+from metatab import DEFAULT_METATAB_FILE
+from metatab.util import slugify
+from sqlalchemy import (
+    Column,
+    Float,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    create_engine
+)
 from sqlalchemy.orm import create_session
-from metapack.cli.core import prt, err
 
 downloader = Downloader()
 
@@ -170,4 +176,3 @@ def insert_data(m, doc, resource_name, db):
     rows = list(r.iterdict)
 
     db.bulk_insert(table_name, rows)
-

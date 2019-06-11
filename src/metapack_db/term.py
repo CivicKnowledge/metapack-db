@@ -5,15 +5,13 @@
 
 """
 
-from .orm import Base
-
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy_jsonfield import JSONField
-from sqlalchemy.orm import relationship, backref, reconstructor
-
 import metapack.terms
 import metatab.terms
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import backref, reconstructor, relationship
+from sqlalchemy_jsonfield import JSONField
 
+from .orm import Base
 
 
 class Term(Base):

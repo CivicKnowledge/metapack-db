@@ -5,21 +5,20 @@
 
 """
 
-from .orm import Base
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import relationship
-from metapack import MetapackDoc, Resolver
-from .term import Section, Term
-from .resource import Resource
-from sqlalchemy import inspect
-from collections import OrderedDict
-from .orm import MutationDict, JSONEncodedObj
-
-from .util import  base_encode
 import hashlib
+from collections import OrderedDict
 
 import metapack.terms
 import metatab.terms
+from metapack import MetapackDoc, Resolver
+from sqlalchemy import Column, DateTime, Integer, String, inspect
+from sqlalchemy.orm import relationship
+
+from .orm import Base, JSONEncodedObj, MutationDict
+from .resource import Resource
+from .term import Section, Term
+from .util import base_encode
+
 
 class MetapackDbDoc(MetapackDoc):
 

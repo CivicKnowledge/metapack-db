@@ -7,6 +7,7 @@
 
 import string
 
+
 def qualified_class_name(o):
     """Full name of an object, including the module"""
     module = o.__class__.__module__

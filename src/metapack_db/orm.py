@@ -5,11 +5,12 @@
 
 """
 
-from sqlalchemy.types import TypeDecorator, TEXT
 import json
-from sqlalchemy.ext.declarative import declarative_base
+
 import sqlalchemy.event
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.mutable import Mutable
+from sqlalchemy.types import TEXT, TypeDecorator
 
 Base = declarative_base()
 
@@ -204,4 +205,3 @@ def JSONAlchemy(sqltype):
         impl = sqltype
 
     return MutationObj.as_mutable(_JSONEncodedObj)
-

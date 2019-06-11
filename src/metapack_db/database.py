@@ -5,19 +5,24 @@
 
 """
 
-from sqlalchemy.orm import sessionmaker, load_only
-from sqlalchemy import String, Integer, Float
-from sqlalchemy import Table, Column
-from sqlalchemy import create_engine, MetaData
-
-from metapack import parse_app_url, MetapackDoc
-
 from contextlib import contextmanager
 
-from .orm import Base
+from metapack import MetapackDoc, parse_app_url
+from sqlalchemy import (
+    Column,
+    Float,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    create_engine
+)
+from sqlalchemy.orm import load_only, sessionmaker
+
 from .document import Document
-from .resource import Resource # Need to import even if not referenced here.
-from .term import Term, Root, Section, ResourceTerm
+from .orm import Base
+from .resource import Resource  # Need to import even if not referenced here.
+from .term import ResourceTerm, Root, Section, Term
 
 
 class Database(object):
@@ -296,5 +301,3 @@ class MetatabManager(object):
         with self.session() as s:
             dbr = s.query(Resource).get(r.id)
             dbr.load_resource()
-
-

@@ -6,13 +6,16 @@
 """
 
 
+from os.path import basename, dirname, join
+
 from metapack.exc import MetapackError, ResourceError
-from rowgenerators.appurl.util import parse_url_to_dict, unparse_url_dict, file_ext
-from os.path import basename, join, dirname
-from rowgenerators import Url, parse_app_url, DownloadError,  WebUrl, FileUrl
-
 from metatab import DEFAULT_METATAB_FILE
-
+from rowgenerators import DownloadError, FileUrl, Url, WebUrl, parse_app_url
+from rowgenerators.appurl.util import (
+    file_ext,
+    parse_url_to_dict,
+    unparse_url_dict
+)
 
 
 class SqlalchemyDatabaseUrl(Url):
@@ -44,6 +47,3 @@ class SqlalchemyDatabaseUrl(Url):
             return self.scheme
         else:
             return self.scheme_extension
-
-
-
