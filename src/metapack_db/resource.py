@@ -103,7 +103,7 @@ class Resource(Base):
     def load_resource(self):
         """Load rows into a previously created resource table"""
 
-        from metapack import parse_app_url, get_generator
+        from rowgenerators import parse_app_url, get_generator
 
         if not self.loaded:
 

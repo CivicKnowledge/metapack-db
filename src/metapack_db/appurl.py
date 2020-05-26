@@ -5,31 +5,18 @@
 
 """
 
-
-from os.path import basename, dirname, join
-
-from metapack.exc import MetapackError, ResourceError
-from metatab import DEFAULT_METATAB_FILE
-from rowgenerators import DownloadError, FileUrl, Url, WebUrl, parse_app_url
-from rowgenerators.appurl.util import (
-    file_ext,
-    parse_url_to_dict,
-    unparse_url_dict
-)
+from rowgenerators import Url
 
 
 class SqlalchemyDatabaseUrl(Url):
-
     match_priority = 80
 
     def __init__(self, url=None, downloader=None, **kwargs):
         super().__init__(str(url), downloader=downloader, **kwargs)
 
-
     @classmethod
     def _match(cls, url, **kwargs):
-        return url.proto in ('postgresql','sqlite','oracle','mysql','mssql')
-
+        return url.proto in ('postgresql', 'sqlite', 'oracle', 'mysql', 'mssql')
 
     #
     # Sqlalchemy URL reverse the sense of scheme_extension and scheme; the optional

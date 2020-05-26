@@ -7,7 +7,8 @@
 
 from contextlib import contextmanager
 
-from metapack import MetapackDoc, parse_app_url
+from metapack import MetapackDoc
+from rowgenerators import parse_app_url
 from sqlalchemy import (
     Column,
     Float,
